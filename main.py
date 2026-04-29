@@ -101,6 +101,12 @@ def _render_header() -> str:
 
 def _render_row(row: pd.Series) -> str:
     symbol    = str(row["Symbol"]).ljust(12)
+    
+    # Check for error status
+    status = str(row.get("Status", ""))
+    if row.get("Last Price") == "—" and status and status != "—":
+        return f"  {Fore.WHITE}{symbol}{Style.RESET_ALL}  {Fore.RED}ERROR: {status}{Style.RESET_ALL}"
+
     price_raw = _fmt(row["Last Price"], 2, 12)
     chg_raw   = _fmt(row["Change"],     2, 11)
     pct_raw   = _fmt(row["% Change"],   2,  8)

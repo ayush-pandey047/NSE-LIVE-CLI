@@ -72,6 +72,17 @@ class NSESession:
             status = exc.response.status_code if exc.response else "?"
             logger.warning("HTTP %s for %s — forcing session refresh.", status, url)
             self._init_session()          # re-warm cookies
+            
+            # Retry once inline for common block errors
+            if status in (401, 403):
+                try:
+                    logger.info("Retrying request after session refresh...")
+                    retry_resp = self._session.get(url, **kwargs)
+                    retry_resp.raise_for_status()
+                    return retry_resp
+                except Exception as retry_exc:
+                    logger.warning("Inline retry failed: %s", retry_exc)
+            
             raise
         except requests.exceptions.RequestException as exc:
             logger.error("Request failed: %s", exc)
